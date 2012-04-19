@@ -49,14 +49,8 @@ describe "Authentication" do
 
       describe "for non-signed-in users" do
         let(:user) {FactoryGirl.create(:user) }
-        let(:non_admin) {FactoryGirl.create(:user) }
-
-        before {sign_in non_admin }
         
-        describe "submitting a DELETE request to Users#destroy action" do
-          before  {delete user_path(user) }
-          specify {response.should redirect_to(root_path) }
-        end
+      
         describe "when attempting to visit a protected page" do
           before do
             visit edit_user_path(user)
@@ -68,6 +62,19 @@ describe "Authentication" do
           describe "after signing in" do
             it "should render the desired protected page" do
               page.should have_selector('title', text: 'Edit user')
+            end
+          end
+          describe "in the Microposts controller" do
+            describe "submitting to the create action" do
+              before {post microposts_path }
+              specify {response.should redirect_to(signin_path) }
+            end
+            describe "submitting to the destroy action" do
+              before do
+                micropost = FactoryGirl.create(:micropost)
+                delete micropost_path(micropost)
+              end
+              specify {response.should redirect_to(signin_path) }
             end
           end
         end
@@ -87,7 +94,18 @@ describe "Authentication" do
             before {visit users_path }
             it {should have_selector('title',  text: 'Sign in') }
           end          
+          
+          describe "as non-admin user" do
+            let(:user) {FactoryGirl.create(:user) }
+            let(:non_admin) {FactoryGirl.create(:user) }
 
+            before {sign_in non_admin }
+        
+            describe "submitting a DELETE request to Users#destroy action" do
+              before  {delete user_path(user) }
+              specify {response.should redirect_to(root_path) }
+            end
+          end
         end
       end
   
